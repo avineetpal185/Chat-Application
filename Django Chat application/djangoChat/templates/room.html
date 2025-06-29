@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  margin: 0 auto;
+  max-width: 800px;
+  padding: 0 20px;
+}
+
+.container {
+  border: 2px solid #dedede;
+  background-color: #f1f1f1;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.darker {
+  border-color: #ccc;
+  background-color: #ddd;
+}
+
+.container::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+.container img {
+  float: left;
+  max-width: 60px;
+  width: 100%;
+  margin-right: 20px;
+  border-radius: 50%;
+}
+
+.container img.right {
+  float: right;
+  margin-left: 20px;
+  margin-right:0;
+}
+
+.time-right {
+  float: right;
+  color: #aaa;
+}
+
+.time-left {
+  float: left;
+  color: #999;
+}
+</style>
+<!--THIS URL IMP FOR AJAX-->
+<script   src="https://code.jquery.com/jquery-3.1.1.min.js"   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="   crossorigin="anonymous"></script>
+</head>
+<body>
+
+<h2>{{room}} - DjChat</h2>
+
+<div id="display">
+
+<!-- <div class="container darker">
+  <b>Tom</b><p>Hello Everyone, How Are You Guys Doing?</p>
+  <span class="time-left">20th, April 2021</span>
+</div> -->
+
+</div>
+
+<script>
+  // once we load document(mean this page)
+$(document).ready(function(){
+//set interval->anything inside this function done again and again 
+//that getting data at real time
+setInterval(function(){
+    $.ajax({
+        type: 'GET',
+        url : "/getMessages/{{room}}/", // in model.py->url  and room(function in view.py)
+        success: function(response){ //response->Joson in view.py->getMessGE function
+            //console.log(response);
+            $("#display").empty();
+            //everthing passing from Json (repsonse.message)
+            for (var key in response.messages)
+            {
+              //this print the(respomse.message[key]->key is username nad then print the message or value)
+                var temp="<div class='container darker'><b>"+response.messages[key].user+"</b><p>"+response.messages[key].value+"</p><span class='time-left'>"+response.messages[key].date+"</span></div>";
+                //adding this in div (tag->dummy data add )
+                $("#display").append(temp);
+            }
+        },
+        error: function(response){
+            alert('An error occured')
+        }
+    });
+},1000);
+})
+</script>
+
+
+<div class="container">
+    <style>
+    input[type=text], select {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    }
+
+    input[type=submit] {
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    }
+
+    input[type=submit]:hover {
+    background-color: #45a049;
+    }
+
+    div {
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    padding: 20px;
+    }
+    </style>
+
+    <form id="post-form">
+        {% csrf_token %}
+        <!--hidden the usernmae and in textfield-->
+        <input type="hidden" name="username" id="username" value="{{username}}"/>
+        <input type="hidden" name="room_id" id="room_id" value="{{room_details.id}}"/>
+        <input type="text" name="message" id="message" width="100px" />
+        <input type="submit" value="Send">
+        <!--When we click submit button and ->view.py-->
+        <!--Again->now work on ajax by passing the username,roomdteials from view.py-->
+    </form>
+</div>
+
+
+</body>
+
+<script type="text/javascript">
+    //when user click on submit button (POST) in the simple above form 
+  $(document).on('submit','#post-form',function(e){ // e value
+    e.preventDefault();
+  //e.preventDefault avoid from reloading the page(during moving 1page->other)
+
+
+// below using ajax to send the details
+    $.ajax({
+      type:'POST',
+      url:'/send',
+      //sending this all data to (send) url in urls.py
+      data:{
+          username:$('#username').val(),
+          room_id:$('#room_id').val(),
+          message:$('#message').val(),
+          //below is way to omiplemeent csrf token in javascript or ajax
+        csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
+      },
+      //success is just like message sent (or is messgae deleted etc)
+      success: function(data){
+        //this alert data is Http repsone in ->views.py( def send funciton and pirnt->Message sent Succesfully)
+        // alert(data)
+      }
+    });
+    //this use when message is sent it blank the textfield
+    document.getElementById('message').value = ''
+  });
+</script>
+
+</html>
